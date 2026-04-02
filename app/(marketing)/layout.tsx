@@ -223,7 +223,7 @@ function Footer() {
 
           {/* Platform & Trust */}
           <div>
-            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">Platform & Trust</h4>
+            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">PLATFORM & TRUST</h4>
             <ul className="space-y-3">
               <li><Link href="/technology" className="text-base text-gray-400 hover:text-white transition-colors">Our Technology</Link></li>
               <li><Link href="/trust-security" className="text-base text-gray-400 hover:text-white transition-colors">Trust & Security</Link></li>

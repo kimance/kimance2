@@ -1,13 +1,12 @@
 "use client";
 
-import { useRef } from "react";
 import Link from "next/link";
-import { Building2, Store, TrendingUp, CheckCircle2, ArrowRight, Handshake } from "lucide-react";
 import { useFadeIn } from "@/app/hooks/useFadeIn";
 import { useStaggerReveal } from "@/app/hooks/useStaggerReveal";
 import { useLang } from "@/app/providers/LanguageContext";
+import { Building2, Store, TrendingUp, Handshake, CheckCircle2, ArrowRight } from "lucide-react";
 
-function InvestorsPartnersHero() {
+function InvestorsPartners() {
   const headerRef = useFadeIn({ delay: 0.1, y: 30 });
   const sectorRef = useStaggerReveal({ stagger: 0.1, duration: 0.6, selector: ".sector-item" });
   const cardsRef = useStaggerReveal({ stagger: 0.15, duration: 0.7, selector: ".partner-card" });
@@ -25,9 +24,9 @@ function InvestorsPartnersHero() {
           <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 text-violet-300 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
             <Handshake className="w-4 h-4" />{p.badge}
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
             {p.heading} <span className="text-violet-400">{p.headingHighlight}</span>
-          </h1>
+          </h2>
           <p className="text-gray-400 text-xl leading-relaxed">{p.subheading}</p>
         </div>
 
@@ -71,9 +70,5 @@ function InvestorsPartnersHero() {
 }
 
 export default function InvestorsPartnersPage() {
-  return (
-    <div className="flex flex-col">
-      <InvestorsPartnersHero />
-    </div>
-  );
+  return <InvestorsPartners />;
 }

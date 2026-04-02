@@ -17,7 +17,8 @@ type FetchRatesOptions = {
 export async function fetchRates({ base = 'USD', symbols }: FetchRatesOptions = {}) {
   const key = process.env.CURRENCYAPI_KEY
   if (!key) {
-    throw new Error('Missing environment variable CURRENCYAPI_KEY')
+    // Fail gracefully: return empty data
+    return { data: {} }
   }
 
   const params = new URLSearchParams({ base_currency: base })
@@ -26,14 +27,19 @@ export async function fetchRates({ base = 'USD', symbols }: FetchRatesOptions = 
 
   const url = `https://api.currencyapi.com/v3/latest?${params.toString()}`
 
-  const res = await fetch(url)
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`CurrencyAPI error: ${res.status} ${text}`)
-  }
+  try {
+    const res = await fetch(url)
+    if (!res.ok) {
+      // Fail gracefully: return empty data
+      return { data: {} }
+    }
 
-  const json = (await res.json()) as CurrencyApiLatestResponse
-  return json
+    const json = (await res.json()) as CurrencyApiLatestResponse
+    return json
+  } catch (error) {
+    // Fail gracefully: return empty data
+    return { data: {} }
+  }
 }
 
 export default fetchRates

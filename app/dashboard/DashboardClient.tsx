@@ -110,7 +110,7 @@ export default function DashboardClient({
             </div>
             <span className="font-semibold text-white text-sm">{t('sendMoney')}</span>
           </Link>
-          <Link href="/wallets" className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-orange-500 hover:bg-orange-600 transition-colors group border border-orange-600 shadow-lg shadow-orange-200">
+          <Link href="#" className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-orange-500 hover:bg-orange-600 transition-colors group border border-orange-600 shadow-lg shadow-orange-200">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform shadow-sm">
               <span className="material-icons-outlined text-2xl">account_balance</span>
             </div>
