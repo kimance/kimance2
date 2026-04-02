@@ -20,10 +20,10 @@ function Technology() {
           <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-600 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
             <Cpu className="w-4 h-4" />{tech.badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight mb-4">
             {tech.heading} <span className="text-violet-600">{tech.headingHighlight}</span>
           </h2>
-          <p className="text-xl text-gray-500 leading-relaxed">{tech.subheading}</p>
+          <p className="text-xl md:text-2xl text-gray-500 leading-relaxed">{tech.subheading}</p>
         </div>
         <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {tech.items.map((item, i) => {
@@ -34,14 +34,14 @@ function Technology() {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{item.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{item.description}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{item.title}</h3>
+                  <p className="text-gray-500 text-lg leading-relaxed">{item.description}</p>
                 </div>
               </div>
             );
           })}
         </div>
-        <p className="text-center text-gray-500 mt-10 max-w-2xl mx-auto text-base leading-relaxed">{tech.footer}</p>
+        <p className="text-center text-gray-500 mt-10 max-w-2xl mx-auto text-lg leading-relaxed">{tech.footer}</p>
       </div>
     </section>
   );

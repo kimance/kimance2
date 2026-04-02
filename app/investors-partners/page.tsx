@@ -24,10 +24,10 @@ function InvestorsPartners() {
           <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 text-violet-300 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
             <Handshake className="w-4 h-4" />{p.badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+          <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
             {p.heading} <span className="text-violet-400">{p.headingHighlight}</span>
           </h2>
-          <p className="text-gray-400 text-xl leading-relaxed">{p.subheading}</p>
+          <p className="text-gray-400 text-xl md:text-2xl leading-relaxed">{p.subheading}</p>
         </div>
 
         <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
@@ -41,7 +41,7 @@ function InvestorsPartners() {
                 <card.icon className="w-6 h-6 text-violet-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">{card.title}</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">{card.desc}</p>
+              <p className="text-gray-400 leading-relaxed text-lg">{card.desc}</p>
             </div>
           ))}
         </div>
@@ -58,7 +58,7 @@ function InvestorsPartners() {
         </div>
 
         <div className="text-center bg-gradient-to-r from-violet-600/20 to-violet-800/20 border border-violet-500/20 rounded-3xl p-10">
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">{p.ctaTitle}</h3>
+          <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">{p.ctaTitle}</h3>
           <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto mb-8">{p.ctaDesc}</p>
           <Link href="/contact" className="inline-flex items-center gap-2 bg-violet-500 hover:bg-violet-400 text-white font-semibold px-8 py-4 rounded-full transition-all duration-200 hover:shadow-lg hover:shadow-violet-500/30 hover:-translate-y-0.5">
             {p.ctaBtn}<ArrowRight className="w-5 h-5" />

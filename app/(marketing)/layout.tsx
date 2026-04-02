@@ -185,18 +185,7 @@ function Footer() {
             <p className="text-base text-gray-400 leading-relaxed">{f.tagline}</p>
           </div>
 
-          {/* Product */}
-          <div>
-            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">{f.product}</h4>
-            <ul className="space-y-3">
-              <li><Link href="#features" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.features}</Link></li>
-              <li><Link href="#pricing" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.pricing}</Link></li>
-              <li><Link href="#marketplace" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.marketplace}</Link></li>
-              <li><Link href="#exchange" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.exchange}</Link></li>
-            </ul>
-          </div>
-
-          {/* Company */}
+          {/* COMPANY */}
           <div>
             <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">{f.company}</h4>
             <ul className="space-y-3">
@@ -208,9 +197,20 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Platform & Trust */}
+          {/* PRODUCT */}
           <div>
-            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">Platform &amp; Trust</h4>
+            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">{f.product}</h4>
+            <ul className="space-y-3">
+              <li><Link href="/features" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.features}</Link></li>
+              <li><Link href="/pricing" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.pricing}</Link></li>
+              <li><Link href="/marketplace" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.marketplace}</Link></li>
+              <li><Link href="/exchange-rate" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.exchange}</Link></li>
+            </ul>
+          </div>
+
+          {/* PLATFORM & TRUST */}
+          <div>
+            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">PLATFORM &amp; TRUST</h4>
             <ul className="space-y-3">
               <li><Link href="/technology" className="text-base text-gray-400 hover:text-white transition-colors">Our Technology</Link></li>
               <li><Link href="/trust-security" className="text-base text-gray-400 hover:text-white transition-colors">Trust &amp; Security</Link></li>

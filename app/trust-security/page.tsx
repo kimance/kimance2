@@ -21,10 +21,10 @@ function TrustSecurity() {
           <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-600 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
             <Shield className="w-4 h-4" />{ts.badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight mb-4">
             {ts.heading} <span className="text-violet-600">{ts.headingHighlight}</span>
           </h2>
-          <p className="text-xl text-gray-500 leading-relaxed">{ts.subheading}</p>
+          <p className="text-xl md:text-2xl text-gray-500 leading-relaxed">{ts.subheading}</p>
         </div>
         <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {ts.items.map((item, i) => {
@@ -36,7 +36,7 @@ function TrustSecurity() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{item.description}</p>
+                  <p className="text-gray-500 text-lg leading-relaxed">{item.description}</p>
                 </div>
               </div>
             );
