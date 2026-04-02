@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SmoothScrollProvider, useSmoothScroll } from "@/app/providers/SmoothScrollProvider";
 import { LanguageProvider, useLang, type Lang } from "@/app/providers/LanguageContext";
 import { Instagram, Linkedin, Facebook, Menu, X } from "lucide-react";
@@ -31,6 +31,7 @@ function SectionNavLink({
   onClick?: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { lenis } = useSmoothScroll();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -39,7 +40,16 @@ function SectionNavLink({
     if (pathname === "/") {
       scrollToSection(section, lenis);
     } else {
-      window.location.assign(`/#${section}`);
+      router.push("/");
+      const attempt = (tries: number) => {
+        const el = document.getElementById(section);
+        if (el) {
+          scrollToSection(section, lenis);
+        } else if (tries > 0) {
+          setTimeout(() => attempt(tries - 1), 120);
+        }
+      };
+      setTimeout(() => attempt(10), 300);
     }
   };
 
@@ -96,7 +106,10 @@ function DesktopNav() {
 
 function MobileMenu() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const { t } = useLang();
+
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -185,7 +198,18 @@ function Footer() {
             <p className="text-base text-gray-400 leading-relaxed">{f.tagline}</p>
           </div>
 
-          {/* COMPANY */}
+          {/* Product */}
+          <div>
+            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">{f.product}</h4>
+            <ul className="space-y-3">
+              <li><Link href="#features" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.features}</Link></li>
+              <li><Link href="#pricing" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.pricing}</Link></li>
+              <li><Link href="#marketplace" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.marketplace}</Link></li>
+              <li><Link href="#exchange" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.exchange}</Link></li>
+            </ul>
+          </div>
+
+          {/* Company */}
           <div>
             <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">{f.company}</h4>
             <ul className="space-y-3">
@@ -197,24 +221,13 @@ function Footer() {
             </ul>
           </div>
 
-          {/* PRODUCT */}
+          {/* Platform & Trust */}
           <div>
-            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">{f.product}</h4>
-            <ul className="space-y-3">
-              <li><Link href="/features" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.features}</Link></li>
-              <li><Link href="/pricing" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.pricing}</Link></li>
-              <li><Link href="/marketplace" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.marketplace}</Link></li>
-              <li><Link href="/exchange-rate" className="text-base text-gray-400 hover:text-white transition-colors">{f.links.exchange}</Link></li>
-            </ul>
-          </div>
-
-          {/* PLATFORM & TRUST */}
-          <div>
-            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">PLATFORM &amp; TRUST</h4>
+            <h4 className="text-base font-semibold text-white uppercase tracking-wider mb-4">Platform & Trust</h4>
             <ul className="space-y-3">
               <li><Link href="/technology" className="text-base text-gray-400 hover:text-white transition-colors">Our Technology</Link></li>
-              <li><Link href="/trust-security" className="text-base text-gray-400 hover:text-white transition-colors">Trust &amp; Security</Link></li>
-              <li><Link href="/investors-partners" className="text-base text-gray-400 hover:text-white transition-colors">Investors &amp; Partners</Link></li>
+              <li><Link href="/trust-security" className="text-base text-gray-400 hover:text-white transition-colors">Trust & Security</Link></li>
+              <li><Link href="/investors-partners" className="text-base text-gray-400 hover:text-white transition-colors">Investors & Partners</Link></li>
             </ul>
           </div>
 

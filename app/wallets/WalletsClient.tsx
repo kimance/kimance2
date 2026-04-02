@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/app/providers/LanguageProvider";
 import { getTranslation } from "@/lib/i18n";
-import { createWallet } from "./actions";
 
 interface Wallet {
   id: string;
   user_id: string;
+  email: string;
   currency: string;
   balance: number;
+  type: 'fiat' | 'crypto';
   created_at: string;
 }
 
 interface WalletsClientProps {
   initialWallets: Wallet[];
+  userId: string;
 }
 
 const getCurrencyIcon = (currency: string) => {
@@ -53,44 +56,39 @@ const getBalanceInUSD = (balance: number, currency: string) => {
   return balance * (rates[currency] || 1);
 };
 
-const isCryptoCurrency = (currency: string) => ["BTC", "ETH"].includes(currency);
-
-export default function WalletsClient({ initialWallets }: WalletsClientProps) {
+export default function WalletsClient({ initialWallets, userId }: WalletsClientProps) {
   const [wallets, setWallets] = useState<Wallet[]>(initialWallets);
   const [isAddingWallet, setIsAddingWallet] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
   const { language } = useLanguage();
-  type TranslationKey = Parameters<typeof getTranslation>[1];
-  const t = (key: TranslationKey, vars?: Record<string, string>) =>
-    getTranslation(language, key, vars);
+  const t = (key: any, vars?: Record<string, string>) => getTranslation(language, key, vars);
 
-  const availableCurrencies = ['USD', 'EUR', 'GBP', 'CAD'];
+  const availableCurrencies = ['USD', 'EUR', 'GBP', 'BTC', 'ETH', 'CAD'];
   const existingCurrencies = wallets.map(w => w.currency);
   const unusedCurrencies = availableCurrencies.filter(c => !existingCurrencies.includes(c));
 
-  const handleCreateWallet = async () => {
+  const handleAddWallet = async () => {
     if (!selectedCurrency) return;
-    setFormError(null);
 
-    startTransition(async () => {
-      try {
-        const result = await createWallet(selectedCurrency);
-        if (result?.wallet) {
-          setWallets((prev) => [result.wallet, ...prev]);
-          setIsAddingWallet(false);
-          setSelectedCurrency(unusedCurrencies[0] || "USD");
-        } else {
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error(error);
-        const message =
-          error instanceof Error ? error.message : "Failed to create wallet";
-        setFormError(message);
+    try {
+      const response = await fetch('/api/wallets/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currency: selectedCurrency,
+          type: ['BTC', 'ETH'].includes(selectedCurrency) ? 'crypto' : 'fiat',
+        }),
+      });
+
+      if (response.ok) {
+        const newWallet = await response.json();
+        setWallets([newWallet, ...wallets]);
+        setIsAddingWallet(false);
+        setSelectedCurrency(unusedCurrencies[0] || 'USD');
       }
-    });
+    } catch (error) {
+      console.error('Failed to add wallet:', error);
+    }
   };
 
   const handleDeleteWallet = async (walletId: string) => {
@@ -116,12 +114,7 @@ export default function WalletsClient({ initialWallets }: WalletsClientProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-serif text-xl font-semibold text-gray-900">{t('myWalletsSection')}</h2>
           <button
-            onClick={() => {
-              if (!isAddingWallet && unusedCurrencies.length > 0) {
-                setSelectedCurrency(unusedCurrencies[0]);
-              }
-              setIsAddingWallet(!isAddingWallet);
-            }}
+            onClick={() => setIsAddingWallet(!isAddingWallet)}
             className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <span className="material-icons-outlined text-sm">add</span>
@@ -133,16 +126,12 @@ export default function WalletsClient({ initialWallets }: WalletsClientProps) {
         {isAddingWallet && (
           <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 mb-4">
             <h3 className="font-semibold text-gray-900 mb-4">{t('addWallet')}</h3>
-            {formError && (
-              <p className="text-sm text-red-600 mb-3">{formError}</p>
-            )}
             <div className="flex gap-3 flex-wrap">
               <div className="flex-1 min-w-50">
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('selectCurrency')}</label>
                 <select
                   value={selectedCurrency}
                   onChange={(e) => setSelectedCurrency(e.target.value)}
-                  disabled={unusedCurrencies.length === 0 || isPending}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                 >
                   {unusedCurrencies.map(currency => (
@@ -154,24 +143,19 @@ export default function WalletsClient({ initialWallets }: WalletsClientProps) {
               </div>
               <div className="flex gap-2 items-end">
                 <button
-                  onClick={handleCreateWallet}
-                  disabled={unusedCurrencies.length === 0 || isPending}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  onClick={handleAddWallet}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
                 >
-                  {isPending ? "Creating..." : t('createWallet')}
+                  {t('createWallet')}
                 </button>
                 <button
                   onClick={() => setIsAddingWallet(false)}
-                  disabled={isPending}
                   className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg text-sm font-medium transition-colors"
                 >
                   {t('cancel')}
                 </button>
               </div>
             </div>
-            {unusedCurrencies.length === 0 && (
-              <p className="text-xs text-gray-500 mt-3">All available wallet currencies are already created.</p>
-            )}
           </div>
         )}
 
@@ -179,8 +163,7 @@ export default function WalletsClient({ initialWallets }: WalletsClientProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {wallets.map((wallet) => {
             const usdValue = getBalanceInUSD(wallet.balance, wallet.currency);
-            const isCrypto = isCryptoCurrency(wallet.currency);
-            const isLowBalance = isCrypto ? wallet.balance < 0.01 : wallet.balance < 100;
+            const isLowBalance = wallet.type === 'crypto' ? wallet.balance < 0.01 : wallet.balance < 100;
 
             return (
               <div
@@ -204,14 +187,14 @@ export default function WalletsClient({ initialWallets }: WalletsClientProps) {
                 {/* Currency Info */}
                 <div className="mb-4">
                   <h3 className="font-semibold text-gray-900 text-sm">{wallet.currency} {t('walletType')}</h3>
-                  <p className="text-xs text-gray-500 mt-1">{isCrypto ? t('cryptoCurrency') : t('fiatCurrency')}</p>
+                  <p className="text-xs text-gray-500 mt-1">{wallet.type === 'crypto' ? t('cryptoCurrency') : t('fiatCurrency')}</p>
                 </div>
 
                 {/* Balance */}
                 <div className="mb-4 pb-4 border-b border-gray-100">
                   <p className="text-xs text-gray-600 mb-1">{t('balance')}</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {wallet.balance.toFixed(isCrypto ? 4 : 2)} {wallet.currency}
+                    {wallet.balance.toFixed(wallet.type === 'crypto' ? 4 : 2)} {wallet.currency}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">≈ ${usdValue.toFixed(2)} {t('USD')}</p>
                 </div>
@@ -258,12 +241,7 @@ export default function WalletsClient({ initialWallets }: WalletsClientProps) {
             </span>
             <p className="text-gray-500 mb-4">{t('noWallets')}</p>
             <button
-              onClick={() => {
-                if (unusedCurrencies.length > 0) {
-                  setSelectedCurrency(unusedCurrencies[0]);
-                }
-                setIsAddingWallet(true);
-              }}
+              onClick={() => setIsAddingWallet(true)}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
               {t('createFirstWallet')}

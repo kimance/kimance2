@@ -1,24 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { buildSendNote, recordTransaction } from '@/lib/services/wallets'
-
-const PRIMARY_SEND_CURRENCY = 'USD'
-
-async function getSenderWallet(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data: wallet, error } = await supabase
-    .from('wallets')
-    .select('id, balance, currency')
-    .eq('user_id', userId)
-    .eq('currency', PRIMARY_SEND_CURRENCY)
-    .maybeSingle()
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return wallet
-}
 
 export async function getBalance() {
   const supabase = await createClient()
@@ -26,8 +8,24 @@ export async function getBalance() {
   
   if (!user) return { error: 'Not authenticated' }
 
-  const wallet = await getSenderWallet(supabase, user.id)
-  return { balance: Number(wallet?.balance ?? 0) }
+  // Try to get existing balance
+  const { data: balance } = await supabase
+    .from('balances')
+    .select('amount')
+    .eq('user_id', user.id)
+    .single()
+
+  if (balance) return { balance: balance.amount }
+
+  // Create default balance of $100 for new user
+  const { data: newBalance, error } = await supabase
+    .from('balances')
+    .insert({ user_id: user.id, email: user.email, amount: 100 })
+    .select('amount')
+    .single()
+
+  if (error) return { error: error.message }
+  return { balance: newBalance.amount }
 }
 
 export async function checkRecipient(email: string) {
@@ -36,9 +34,14 @@ export async function checkRecipient(email: string) {
   
   if (!user) return { error: 'Not authenticated' }
   if (email === user.email) return { error: 'Cannot send money to yourself' }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { error: 'Enter a valid recipient email' }
-  }
+
+  const { data: recipient } = await supabase
+    .from('balances')
+    .select('email')
+    .eq('email', email)
+    .single()
+
+  if (!recipient) return { error: 'Recipient not found. They must have an account first.' }
   return { exists: true }
 }
 
@@ -53,47 +56,72 @@ export async function sendMoney(recipientEmail: string, recipientAmount: number,
   // If deductAmount is provided (promo applied), use it; otherwise deduct full amount
   const amountToDeduct = deductAmount !== undefined ? deductAmount : recipientAmount
 
-  const senderWallet = await getSenderWallet(supabase, user.id)
-  if (!senderWallet) {
-    return { error: 'USD wallet not found. Create a USD wallet first.' }
-  }
-  const senderBalance = Number(senderWallet.balance)
+  // Get sender's balance (create if doesn't exist)
+  let { data: senderBalance } = await supabase
+    .from('balances')
+    .select('amount')
+    .eq('user_id', user.id)
+    .single()
 
-  if (senderBalance < amountToDeduct) {
+  if (!senderBalance) {
+    const { data: newBalance, error } = await supabase
+      .from('balances')
+      .insert({ user_id: user.id, email: user.email, amount: 100 })
+      .select('amount')
+      .single()
+    if (error) return { error: 'Failed to initialize balance' }
+    senderBalance = newBalance
+  }
+
+  if (senderBalance.amount < amountToDeduct) {
     return { error: 'Insufficient balance' }
   }
 
-  // Deduct amount from sender wallet
-  const senderNewBalance = senderBalance - amountToDeduct
-  const { error: walletUpdateError } = await supabase
-    .from('wallets')
-    .update({ balance: senderNewBalance })
-    .eq('id', senderWallet.id)
+  // Check if recipient exists
+  const { data: recipientBalance } = await supabase
+    .from('balances')
+    .select('amount, user_id')
+    .eq('email', recipientEmail)
+    .single()
+
+  if (!recipientBalance) {
+    return { error: 'Recipient not found. They must have an account first.' }
+  }
+
+  // Deduct discounted amount from sender
+  const { error: senderError } = await supabase
+    .from('balances')
+    .update({ amount: senderBalance.amount - amountToDeduct, updated_at: new Date().toISOString() })
     .eq('user_id', user.id)
 
-  if (walletUpdateError) {
-    return { error: 'Failed to deduct balance' }
-  }
+  if (senderError) return { error: 'Failed to deduct balance' }
 
-  try {
-    await recordTransaction(supabase, {
-      userId: user.id,
-      senderEmail: user.email ?? '',
-      recipientEmail,
-      amount: recipientAmount,
-      type: 'send',
-      note: buildSendNote(note),
-    })
-  } catch {
+  // Add full amount to recipient
+  const { error: recipientError } = await supabase
+    .from('balances')
+    .update({ amount: recipientBalance.amount + recipientAmount, updated_at: new Date().toISOString() })
+    .eq('email', recipientEmail)
+
+  if (recipientError) {
+    // Rollback sender's balance
     await supabase
-      .from('wallets')
-      .update({ balance: senderBalance })
-      .eq('id', senderWallet.id)
+      .from('balances')
+      .update({ amount: senderBalance.amount })
       .eq('user_id', user.id)
-    return { error: 'Failed to record transaction' }
+    return { error: 'Failed to send to recipient' }
   }
 
-  return { success: true, newBalance: senderNewBalance }
+  // Create transaction record
+  await supabase.from('transactions').insert({
+    sender_id: user.id,
+    sender_email: user.email,
+    recipient_id: recipientBalance.user_id,
+    recipient_email: recipientEmail,
+    amount: recipientAmount,
+    note: note || null,
+  })
+
+  return { success: true, newBalance: senderBalance.amount - amountToDeduct }
 }
 
 export async function getTransactions() {

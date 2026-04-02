@@ -1,7 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
-import { getUserGlobalBalance, getUserWallets, type WalletRecord } from "@/lib/services/wallets";
-import { getExchangeRates } from "@/lib/services/exchange";
+
+async function getOrCreateBalance(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, email: string) {
+  const { data: balance } = await supabase
+    .from('balances')
+    .select('amount')
+    .eq('user_id', userId)
+    .single();
+
+  if (balance) return balance.amount;
+
+  // Create default balance
+  const { data: newBalance } = await supabase
+    .from('balances')
+    .insert({ user_id: userId, email: email, amount: 100 })
+    .select('amount')
+    .single();
+
+  return newBalance?.amount ?? 100;
+}
 
 async function getTransactions(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase
@@ -18,19 +35,17 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
-  const walletBalances: WalletRecord[] = await getUserWallets(supabase, user!.id);
-  const balance = await getUserGlobalBalance(supabase, user!.id);
+  const userEmail = user?.email || '';
+  const balance = await getOrCreateBalance(supabase, user!.id, userEmail);
   const transactions = await getTransactions(supabase, user!.id);
-  const rates = await getExchangeRates();
 
   return (
     <DashboardClient 
       userName={userName}
+      userEmail={userEmail}
       balance={balance}
-      walletBalances={walletBalances}
       transactions={transactions}
       userId={user!.id}
-      initialRates={rates}
     />
   );
 }

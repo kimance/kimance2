@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { currency } = await req.json();
+    const { currency, type } = await req.json();
 
     if (!currency) {
       return NextResponse.json({ error: "Currency is required" }, { status: 400 });
@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
       .from('wallets')
       .insert({
         user_id: user.id,
+        email: user.email,
         currency,
+        type: type || 'fiat',
         balance: 0,
       })
       .select()

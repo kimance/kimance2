@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import Sidebar from "@/app/components/Sidebar";
 
 interface Transaction {
@@ -48,7 +48,16 @@ function TransactionModal({
   tx: Transaction;
   onClose: () => void;
 }) {
-  const fullDate = tx.created_at.replace("T", " ").slice(0, 19);
+  const date = new Date(tx.created_at);
+  const fullDate = date.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 
   return (
     <div
@@ -166,17 +175,9 @@ export default function TransactionsClient({
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
-  const latestTxMs = useMemo(
-    () =>
-      transactions.reduce((max, tx) => {
-        const ts = new Date(tx.created_at).getTime();
-        return Number.isFinite(ts) ? Math.max(max, ts) : max;
-      }, 0),
-    [transactions]
-  );
 
   const filtered = useMemo(() => {
-    const now = latestTxMs;
+    const now = Date.now();
     const cutoffs: Record<DateFilter, number> = {
       all: 0,
       today: now - 24 * 60 * 60 * 1000,
@@ -200,7 +201,7 @@ export default function TransactionsClient({
         return false;
       return true;
     });
-  }, [transactions, search, dateFilter, latestTxMs]);
+  }, [transactions, search, dateFilter]);
 
   const totalAmount = useMemo(
     () => filtered.reduce((s, tx) => s + Number(tx.amount), 0),
@@ -341,8 +342,16 @@ export default function TransactionsClient({
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filtered.map((tx) => {
-                      const dateStr = tx.created_at.slice(0, 10);
-                      const timeStr = tx.created_at.slice(11, 16);
+                      const date = new Date(tx.created_at);
+                      const dateStr = date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      });
+                      const timeStr = date.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
 
                       return (
                         <tr

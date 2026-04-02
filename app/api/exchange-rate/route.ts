@@ -1,64 +1,46 @@
 import { NextResponse } from "next/server";
 
-const USD_FALLBACK_RATES: Record<string, number> = {
-  USD: 1,
-  CAD: 1.37,
-  EUR: 0.92,
-  GBP: 0.78,
-  CDF: 2800,
-  NGN: 1540,
-  KES: 129,
-  GHS: 15.2,
-};
-
-function buildFallbackRates(base: string): Record<string, number> {
-  const baseCode = base.toUpperCase();
-  const baseRate = USD_FALLBACK_RATES[baseCode];
-  if (!baseRate) {
-    return { [baseCode]: 1, USD: 1 };
-  }
-
-  const normalized: Record<string, number> = {};
-  for (const [code, usdRate] of Object.entries(USD_FALLBACK_RATES)) {
-    normalized[code] = usdRate / baseRate;
-  }
-  normalized[baseCode] = 1;
-  return normalized;
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from") || "USD";
-  const base = from.toUpperCase();
 
   try {
+    const apiKey = process.env.EXCHANGE_RATE_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API key not configured" },
+        { status: 500 }
+      );
+    }
+
     const res = await fetch(
-      `https://api.exchangerate.host/latest?base=${encodeURIComponent(base)}`,
-      { cache: "no-store" }
+      `https://v6.exchangerate-api.com/v6/${apiKey}/latest/${from}`
     );
 
     if (!res.ok) {
-      throw new Error(`Failed to fetch rates: ${res.status}`);
+      return NextResponse.json(
+        { error: "Failed to fetch rates" },
+        { status: res.status }
+      );
     }
 
-    const data = (await res.json()) as {
-      rates?: Record<string, number>;
-    } | null;
+    const data = await res.json();
 
-    if (!data || !data.rates) {
-      throw new Error("Invalid exchange API response");
+    if (data.result !== "success") {
+      return NextResponse.json(
+        { error: "API error" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
-      result: "success",
-      conversion_rates: data.rates,
+      result: data.result,
+      conversion_rates: data.conversion_rates,
     });
   } catch (error) {
-    console.error("Exchange-rate route failed, using fallback:", error);
-    return NextResponse.json({
-      result: "success",
-      conversion_rates: buildFallbackRates(base),
-      fallback: true,
-    });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

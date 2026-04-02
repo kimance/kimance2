@@ -119,7 +119,7 @@ export const en = {
   },
   about: {
     hero: {
-      badge: "AI-Powered Global Fintech Platform",
+      badge: "AI-Powered Global Finance Platform",
       heading1: "Finance Without",
       heading2: "Borders.",
       subheading: "Kimance is an AI-powered global finance platform designed to simplify how individuals and businesses send, receive, manage, and grow money across borders.",

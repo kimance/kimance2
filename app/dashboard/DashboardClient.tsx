@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useLanguage } from "@/app/providers/LanguageProvider";
 import { getTranslation } from "@/lib/i18n";
 import CurrencyDashboard from "@/app/components/CurrencyDashboard";
-import { isFundingTransaction } from "@/lib/services/wallets";
-import type { DashboardRates } from "@/lib/services/exchange";
 
 interface Transaction {
   id: string;
@@ -17,44 +15,33 @@ interface Transaction {
   created_at: string;
 }
 
-interface WalletBalance {
-  id: string;
-  currency: string;
-  balance: number;
-}
-
 interface DashboardClientProps {
   userName: string;
+  userEmail: string;
   balance: number;
-  walletBalances: WalletBalance[];
   transactions: Transaction[];
   userId: string;
-  initialRates: DashboardRates | null;
 }
 
-export default function DashboardClient({
-  userName,
-  balance,
-  walletBalances,
+export default function DashboardClient({ 
+  userName, 
+  userEmail, 
+  balance, 
   transactions,
-  userId,
-  initialRates,
+  userId 
 }: DashboardClientProps) {
   const { language } = useLanguage();
-  type TranslationKey = Parameters<typeof getTranslation>[1];
-  const t = (key: TranslationKey, vars?: Record<string, string>) =>
-    getTranslation(language, key, vars);
-  const isCryptoCurrency = (currency: string) => ["BTC", "ETH"].includes(currency);
-  const formatIsoLike = (value: string) => value.replace("T", " ").slice(0, 16);
+  const t = (key: any, vars?: Record<string, string>) => getTranslation(language, key, vars);
 
   return (
     <>
+      {/* Header — #35: Bigger text */}
       <header className="h-20 px-6 hidden md:flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-gray-200 py-10">
         <div>
           <h1 className="font-serif text-2xl font-bold text-gray-900">
-            {t("welcome", { name: userName || "User" })}
+            {t('welcome', { name: userName || 'Ethan' })}
           </h1>
-          <p className="text-sm text-purple-600">{t("welcomeBack")}</p>
+          <p className="text-sm text-purple-600">{t('welcomeBack')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:text-purple-600 transition-colors relative shadow-sm">
@@ -67,21 +54,23 @@ export default function DashboardClient({
         </div>
       </header>
 
+      {/* Dashboard Content */}
       <div className="p-6 max-w-6xl mx-auto w-full space-y-6 mt-15">
+        {/* #34: REARRANGED — Row 1: Currency Rates (top-left) + Balance (top-right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* #37: Currency Dashboard — Rate is now first/prominent */}
           <div className="lg:col-span-7">
-            <CurrencyDashboard
-              initialRates={initialRates}
-            />
+            <CurrencyDashboard />
           </div>
 
+          {/* Balance Card — moved to right side */}
           <div className="lg:col-span-5 relative group">
             <div className="gradient-card h-64 rounded-2xl p-6 flex flex-col justify-between text-white shadow-xl relative overflow-hidden ring-1 ring-black/5 transition-transform transform hover:scale-[1.01] duration-300">
               <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
               <div className="relative z-10 flex justify-between items-start">
                 <div>
-                  <p className="text-gray-400 font-medium mb-1 text-sm">{t("globalBalance")}</p>
+                  <p className="text-gray-400 font-medium mb-1 text-sm">{t('globalBalance')}</p>
                   <h2 className="font-serif text-4xl font-medium tracking-tight">
                     ${Number(balance).toFixed(2)}
                   </h2>
@@ -96,7 +85,7 @@ export default function DashboardClient({
                     <span className="material-icons-outlined text-sm mr-0.5">arrow_upward</span>
                     2.5%
                   </span>
-                  <span className="text-xs text-gray-400">{t("vsLastMonth")}</span>
+                  <span className="text-xs text-gray-400">{t('vsLastMonth')}</span>
                 </div>
                 <div className="flex -space-x-2">
                   <div className="w-6 h-6 rounded-full bg-white/20 border border-white/10"></div>
@@ -107,66 +96,70 @@ export default function DashboardClient({
           </div>
         </div>
 
+        {/* #34: Quick Actions — now underneath as a full-width row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link href="/add-funds" className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-blue-500 hover:bg-blue-600 transition-colors group border border-blue-600 shadow-lg shadow-blue-200">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform shadow-sm">
               <span className="material-icons-outlined text-2xl">add</span>
             </div>
-            <span className="font-semibold text-white text-sm">{t("addFunds")}</span>
+            <span className="font-semibold text-white text-sm">{t('addFunds')}</span>
           </Link>
           <Link href="/send-money" className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-purple-600 hover:bg-purple-700 transition-colors group border border-purple-700 shadow-lg shadow-purple-200">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform shadow-sm">
               <span className="material-icons-outlined text-2xl">arrow_forward</span>
             </div>
-            <span className="font-semibold text-white text-sm">{t("sendMoney")}</span>
+            <span className="font-semibold text-white text-sm">{t('sendMoney')}</span>
           </Link>
           <Link href="/wallets" className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-orange-500 hover:bg-orange-600 transition-colors group border border-orange-600 shadow-lg shadow-orange-200">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform shadow-sm">
               <span className="material-icons-outlined text-2xl">account_balance</span>
             </div>
-            <span className="font-semibold text-white text-sm">{t("myWallets")}</span>
+            <span className="font-semibold text-white text-sm">{t('deposit')}</span>
           </Link>
           <Link href="/dashboard/crypto" className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 transition-colors group border border-emerald-600 shadow-lg shadow-green-200">
             <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform shadow-sm">
               <span className="material-icons-outlined text-2xl">currency_bitcoin</span>
             </div>
-            <span className="font-semibold text-white text-sm">{t("crypto")}</span>
+            <span className="font-semibold text-white text-sm">{t('crypto')}</span>
           </Link>
         </div>
 
+        {/* Bottom Row - Transactions + Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Transactions — #35: Bigger titles */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-xl font-bold text-gray-900">{t("recentTransactions")}</h3>
-              <Link href="/wallets" className="text-purple-600 text-sm font-medium hover:underline">
-                {t("viewAll")}
+              <h3 className="font-serif text-xl font-bold text-gray-900">
+                {t('recentTransactions')}
+              </h3>
+              <Link href="#" className="text-purple-600 text-sm font-medium hover:underline">
+                {t('viewAll')}
               </Link>
             </div>
             <div className="space-y-2">
               {transactions.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-8">{t("noTransactions")}</p>
+                <p className="text-gray-500 text-sm text-center py-8">{t('noTransactions')}</p>
               ) : (
                 transactions.map((tx) => {
-                  const isFunding = isFundingTransaction(tx.note);
-                  const isSent = !isFunding && tx.sender_id === userId;
+                  const isSent = tx.sender_id === userId;
                   const otherEmail = isSent ? tx.recipient_email : tx.sender_email;
-                  const timeStr = formatIsoLike(tx.created_at);
-
+                  const date = new Date(tx.created_at);
+                  const timeStr = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
                   return (
                     <div key={tx.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isSent ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
-                          <span className="material-icons-outlined text-xl">{isSent ? "arrow_upward" : "arrow_downward"}</span>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isSent ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                          <span className="material-icons-outlined text-xl">{isSent ? 'arrow_upward' : 'arrow_downward'}</span>
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">
-                            {isFunding ? "Added Funds" : isSent ? `${t("to")}: ${otherEmail}` : `${t("from")}: ${otherEmail}`}
+                            {isSent ? `${t('to')}: ${otherEmail}` : `${t('from')}: ${otherEmail}`}
                           </p>
                           <p className="text-xs text-gray-500">{tx.note || timeStr}</p>
                         </div>
                       </div>
-                      <span className={`font-semibold text-sm ${isSent ? "text-red-600" : "text-green-600"}`}>
-                        {isSent ? "-" : "+"}${Number(tx.amount).toFixed(2)}
+                      <span className={`font-semibold text-sm ${isSent ? 'text-red-600' : 'text-green-600'}`}>
+                        {isSent ? '-' : '+'}${Number(tx.amount).toFixed(2)}
                       </span>
                     </div>
                   );
@@ -175,58 +168,39 @@ export default function DashboardClient({
             </div>
           </div>
 
+          {/* Right Column - Insights + Exchange Widget — #35: Bigger titles */}
           <div className="lg:col-span-1 space-y-4">
-            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-serif text-lg font-bold text-gray-900">Wallet Balances</h3>
-                <Link href="/wallets" className="text-purple-600 text-xs font-medium hover:underline">
-                  {t("viewAll")}
-                </Link>
-              </div>
-              <div className="space-y-2">
-                {walletBalances.length === 0 ? (
-                  <p className="text-xs text-gray-500 py-3">No wallets yet</p>
-                ) : (
-                  walletBalances.slice(0, 4).map((wallet) => (
-                    <div key={wallet.id} className="flex items-center justify-between py-2 border-b last:border-b-0 border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                        <span className="text-sm font-medium text-gray-900">{wallet.currency}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-gray-700">
-                        {Number(wallet.balance).toFixed(isCryptoCurrency(wallet.currency) ? 4 : 2)}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
+            {/* AI Insights */}
             <div className="bg-linear-to-br from-purple-600/10 to-blue-500/10 rounded-2xl p-4 border border-purple-600/20 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-3 opacity-10">
                 <span className="material-icons-outlined text-5xl text-purple-600">psychology</span>
               </div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded">AI</span>
-                <h3 className="font-serif text-lg font-bold text-gray-900">{t("smartInsights")}</h3>
+                <h3 className="font-serif text-lg font-bold text-gray-900">
+                  {t('smartInsights')}
+                </h3>
               </div>
               <div className="space-y-2">
                 <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    <span className="font-semibold text-purple-600">{t("goodJob")}</span> {t("youSpent")} <span className="font-semibold text-green-600">15% {t("lessOnDiningOut")}</span>
+                    <span className="font-semibold text-purple-600">{t('goodJob')}</span> {t('youSpent')}{" "}
+                    <span className="font-semibold text-green-600">15% {t('lessOnDiningOut')}</span>
                   </p>
                 </div>
                 <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 opacity-80">
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    {t("projectedSavings")} <span className="font-semibold text-gray-900">$450.00</span> {t("basedOnCurrentTrends")}
+                    {t('projectedSavings')}{" "}
+                    <span className="font-semibold text-gray-900">$450.00</span> {t('basedOnCurrentTrends')}
                   </p>
                 </div>
               </div>
               <button className="mt-3 w-full py-2 bg-white text-purple-600 font-medium text-xs rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {t("viewFullReport")}
+                {t('viewFullReport')}
               </button>
             </div>
 
+            {/* Quick Convert Link */}
             <Link href="/exchange-rate" className="block bg-linear-to-r from-purple-600 to-violet-600 rounded-2xl p-4 text-white hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>

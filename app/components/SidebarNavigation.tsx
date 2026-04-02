@@ -15,9 +15,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/dashboard", icon: "dashboard", labelKey: "dashboard" },
   { href: "/wallets", icon: "account_balance_wallet", labelKey: "myWallets" },
-  { href: "/add-funds", icon: "add_card", labelKey: "addFunds" },
   { href: "/send-money", icon: "send", labelKey: "sendMoney" },
-  { href: "/dashboard/crypto", icon: "currency_bitcoin", labelKey: "crypto" },
   { href: "/marketplace", icon: "storefront", labelKey: "marketplace" },
   { href: "/find-tax-experts", icon: "person_search", labelKey: "findTaxExperts" },
   { href: "/settings", icon: "settings", labelKey: "settings" },
@@ -39,7 +37,6 @@ export default function SidebarNavigation({
 }) {
   const pathname = usePathname();
   const { language } = useLanguage();
-  type TranslationKey = Parameters<typeof getTranslation>[1];
 
   const items = isAdmin ? [...navItems, adminNavItem] : navItems;
 
@@ -64,7 +61,7 @@ export default function SidebarNavigation({
             <span className="material-icons-outlined text-xl">{item.icon}</span>
             {item.labelKey === "admin"
               ? "Admin"
-              : getTranslation(language, item.labelKey as TranslationKey)}
+              : getTranslation(language, item.labelKey as any)}
             {item.badge && (
               <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                 {item.badge}

@@ -5,19 +5,19 @@ import WalletsPageHeader from "./WalletsPageHeader";
 import WalletsClient from "./WalletsClient";
 import { useLanguage } from "@/app/providers/LanguageProvider";
 import { getTranslation } from "@/lib/i18n";
-import { isFundingTransaction } from "@/lib/services/wallets";
 
 interface Wallet {
   id: string;
   user_id: string;
+  email: string;
   currency: string;
   balance: number;
+  type: 'fiat' | 'crypto';
   created_at: string;
 }
 
 interface Transaction {
   id: string;
-  type?: string | null;
   sender_id: string;
   sender_email: string;
   recipient_email: string;
@@ -44,10 +44,7 @@ export default function WalletsPageClient({
   userId,
 }: WalletsPageClientProps) {
   const { language } = useLanguage();
-  type TranslationKey = Parameters<typeof getTranslation>[1];
-  const t = (key: TranslationKey, vars?: Record<string, string>) =>
-    getTranslation(language, key, vars);
-  const formatIsoLike = (value: string) => value.replace("T", " ").slice(0, 16);
+  const t = (key: any, vars?: Record<string, string>) => getTranslation(language, key, vars);
   const mobileHeader = (
     <div className="flex flex-col">
       <span className="font-serif text-lg font-bold text-gray-900 leading-tight">{t('myWallets')}</span>
@@ -88,7 +85,7 @@ export default function WalletsPageClient({
           </div>
 
           {/* Wallets Grid */}
-          <WalletsClient initialWallets={wallets} />
+          <WalletsClient initialWallets={wallets} userId={userId} />
 
           {/* Bottom Section - Recent Transactions */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -108,11 +105,10 @@ export default function WalletsPageClient({
                   <p className="text-gray-500 text-sm text-center py-8">{t('noTransactions')}</p>
                 ) : (
                   transactions.map((tx) => {
-                    const isFunding = isFundingTransaction(tx.note);
-                    const txType = (tx.type || (isFunding ? "add_funds" : "send")).replace("_", " ");
-                    const isSent = !isFunding && tx.sender_id === userId;
+                    const isSent = tx.sender_id === userId;
                     const otherEmail = isSent ? tx.recipient_email : tx.sender_email;
-                    const timeStr = formatIsoLike(tx.created_at);
+                    const date = new Date(tx.created_at);
+                    const timeStr = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
                     
                     return (
                       <div key={tx.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-200">
@@ -124,9 +120,9 @@ export default function WalletsPageClient({
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 text-sm">
-                              {isFunding ? 'Added Funds' : isSent ? t('sentTo') : t('receivedFrom')}
+                              {isSent ? t('sentTo') : t('receivedFrom')}
                             </p>
-                            <p className="text-xs text-gray-500">{txType} • {otherEmail}</p>
+                            <p className="text-xs text-gray-500">{otherEmail}</p>
                           </div>
                         </div>
                         <div className="text-right">

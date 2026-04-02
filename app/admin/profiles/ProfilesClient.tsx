@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import Sidebar from "@/app/components/Sidebar";
 import { updateUserRole } from "./actions";
 
@@ -36,7 +36,16 @@ function UserModal({ user, currentUserId, onClose, onRoleChange }: { user: User;
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
-  const fullDate = user.created_at.replace("T", " ").slice(0, 19);
+  const date = new Date(user.created_at);
+  const fullDate = date.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 
   const isAdmin = user.role === "admin";
   const isSelf = user.id === currentUserId;
@@ -334,7 +343,8 @@ export default function ProfilesClient({ users, userName, userEmail, currentUser
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filtered.map((user) => {
-                      const dateStr = user.created_at.slice(0, 10);
+                      const date = new Date(user.created_at);
+                      const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
                       const isAdmin = user.role === "admin";
                       const isSelf = user.id === currentUserId;
 

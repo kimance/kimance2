@@ -1,5 +1,4 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { getSupabaseAdminEnv } from './env'
 
 /**
  * Server-only admin client that bypasses Row Level Security.
@@ -7,11 +6,9 @@ import { getSupabaseAdminEnv } from './env'
  * Used exclusively for admin operations (e.g. reading all transactions).
  */
 export function createAdminClient() {
-  const { supabaseUrl, supabaseServiceRoleKey } = getSupabaseAdminEnv()
-
   return createSupabaseClient(
-    supabaseUrl,
-    supabaseServiceRoleKey,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    (process.env.SUPABASE_SECRET_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'dummy_key') as string,
     {
       auth: {
         autoRefreshToken: false,

@@ -1,133 +1,132 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  getExchangeRates,
-  type DashboardRateCode,
-  type DashboardRates,
-} from "@/lib/services/exchange";
+import { useEffect, useState } from "react";
+import { useLanguage } from "@/app/providers/LanguageProvider";
+import { getTranslation } from "@/lib/i18n";
 
-type CurrencyCard = {
-  code: DashboardRateCode;
-  label: string;
-  region: "Africa" | "Europe" | "Americas";
-};
+type Rate = { code: string; value: number };
+type RatesResponse = { data?: Record<string, Rate>; error?: string };
 
-const CURRENCIES: CurrencyCard[] = [
-  { code: "CAD", label: "CAD", region: "Americas" },
-  { code: "EUR", label: "EUR", region: "Europe" },
-  { code: "GBP", label: "GBP", region: "Europe" },
-  { code: "CDF", label: "CDF", region: "Africa" },
+const CURRENCY_INFO: { code: string; name: string; flag: string; region: string }[] = [
+  { code: "CAD", name: "Canadian Dollar", flag: "🇨🇦", region: "North America" },
+  { code: "EUR", name: "Euro", flag: "🇪🇺", region: "Europe" },
+  { code: "GBP", name: "British Pound", flag: "🇬🇧", region: "Europe" },
+  { code: "CDF", name: "Congolese Franc", flag: "🇨🇩", region: "Africa" },
+  { code: "XAF", name: "CFA Franc (CEMAC)", flag: "🇨🇲", region: "Africa" },
+  { code: "XOF", name: "CFA Franc (UEMOA)", flag: "🇨🇮", region: "Africa" },
+  { code: "KES", name: "Kenyan Shilling", flag: "🇰🇪", region: "Africa" },
+  { code: "NGN", name: "Nigerian Naira", flag: "🇳🇬", region: "Africa" },
+  { code: "RWF", name: "Rwandan Franc", flag: "🇷🇼", region: "Africa" },
+  { code: "BIF", name: "Burundian Franc", flag: "🇧🇮", region: "Africa" },
+  { code: "TZS", name: "Tanzanian Shilling", flag: "🇹🇿", region: "Africa" },
+  { code: "UGX", name: "Ugandan Shilling", flag: "🇺🇬", region: "Africa" },
+  { code: "ZAR", name: "South African Rand", flag: "🇿🇦", region: "Africa" },
+  { code: "GHS", name: "Ghanaian Cedi", flag: "🇬🇭", region: "Africa" },
+  { code: "ETB", name: "Ethiopian Birr", flag: "🇪🇹", region: "Africa" },
+  { code: "MAD", name: "Moroccan Dirham", flag: "🇲🇦", region: "Africa" },
+  { code: "EGP", name: "Egyptian Pound", flag: "🇪🇬", region: "Africa" },
+  { code: "MZN", name: "Mozambican Metical", flag: "🇲🇿", region: "Africa" },
+  { code: "AOA", name: "Angolan Kwanza", flag: "🇦🇴", region: "Africa" },
 ];
 
-const fallbackRates: Record<DashboardRateCode, number> = {
-  CAD: 1.37,
-  EUR: 0.86,
-  GBP: 0.74,
-  CDF: 2276.52,
-};
+const ALL_CODES = CURRENCY_INFO.map((c) => c.code);
 
-interface CurrencyDashboardProps {
-  initialRates: DashboardRates | null;
-}
+export default function CurrencyDashboard() {
+  const { language } = useLanguage();
+  const t = (key: any, vars?: Record<string, string>) => getTranslation(language, key, vars);
+  const [rates, setRates] = useState<Record<string, Rate> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>("all");
 
-export default function CurrencyDashboard({
-  initialRates,
-}: CurrencyDashboardProps) {
-  const [rates, setRates] = useState<DashboardRates | null>(initialRates);
-  const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<"All" | "Africa" | "Europe" | "Americas">("All");
-  const ratesRef = useRef<DashboardRates | null>(initialRates);
+  async function loadRates() {
+    try {
+      const res = await fetch(`/api/currency?base=USD&symbols=${ALL_CODES.join(",")}`);
+      const json = (await res.json()) as RatesResponse;
+      if (res.ok && json.data) setRates(json.data);
+    } catch {
+      /* silent — we still show cards without rates */
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    ratesRef.current = rates;
-  }, [rates]);
-
-  const refreshRates = async (isActive?: () => boolean) => {
-    if (isActive && !isActive()) return;
-    if (ratesRef.current) {
-      setRefreshing(true);
-    }
-
-    const liveRates = await getExchangeRates();
-    if (isActive && !isActive()) return;
-    if (liveRates !== null) {
-      setRates(liveRates);
-    }
-    if (!isActive || isActive()) {
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    let active = true;
-    const isActive = () => active;
-    const intervalId = setInterval(() => {
-      void refreshRates(isActive);
-    }, 60_000);
-    return () => {
-      active = false;
-      clearInterval(intervalId);
-    };
+    loadRates();
+    const id = setInterval(loadRates, 5 * 60 * 1000); // poll every 5 min to match server cache TTL
+    return () => clearInterval(id);
   }, []);
 
-  const visibleCurrencies =
-    filter === "All"
-      ? CURRENCIES
-      : CURRENCIES.filter((currency) => currency.region === filter);
+  const filtered = CURRENCY_INFO.filter((c) => {
+    if (filter === "all") return true;
+    return c.region === filter;
+  });
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm min-h-64 flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm h-64 flex flex-col">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="material-icons-outlined text-purple-600">currency_exchange</span>
-          <h3 className="font-serif text-xl font-bold text-gray-900">Today&apos;s Rates</h3>
+          <h3 className="font-serif text-xl font-bold text-gray-900">
+            Today&apos;s Rates
+          </h3>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={`w-2 h-2 rounded-full ${rates ? "bg-green-400 animate-pulse" : "bg-gray-400"}`}
-          ></span>
-          <span className="text-xs text-gray-500 font-medium">{rates ? "LIVE" : "Demo"}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+          <span className="text-xs text-gray-400 font-medium">LIVE</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-        {(["All", "Africa", "Europe", "Americas"] as const).map((tab) => (
+      {/* Region Filter */}
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+        {[
+          { id: "all", label: "All" },
+          { id: "Africa", label: "Africa" },
+          { id: "Europe", label: "Europe" },
+          { id: "North America", label: "Americas" },
+        ].map((f) => (
           <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              filter === tab
-                ? "bg-purple-600 text-white shadow-sm"
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              filter === f.id
+                ? "bg-purple-600 text-white shadow-md"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {tab}
+            {f.label}
           </button>
         ))}
       </div>
 
-      <div className={`flex gap-4 overflow-x-auto pb-2 ${rates ? "" : "opacity-80"}`}>
-        {visibleCurrencies.map((currency) => {
-          const value = rates?.[currency.code] ?? fallbackRates[currency.code];
-          return (
-            <div
-              key={currency.code}
-              className="shrink-0 w-[140px] p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col items-center justify-center text-center"
-            >
-              <p className="text-sm text-gray-500 font-semibold tracking-wide">{currency.label}</p>
-              <p className="text-2xl font-semibold text-purple-600 mt-3 leading-none">{value.toFixed(4)}</p>
-              <p className="text-xs text-gray-400 mt-3 uppercase">Per USD</p>
-            </div>
-          );
-        })}
+      {/* Horizontal scrollable currency cards */}
+      <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
+        {loading ? (
+          <p className="text-xs text-gray-400 py-4 w-full text-center">Loading rates…</p>
+        ) : (
+          filtered.map((curr) => {
+            const rate = rates?.[curr.code];
+            return (
+              <div
+                key={curr.code}
+                className="shrink-0 w-30 flex flex-col items-center gap-1 p-3 rounded-xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-colors"
+              >
+                <span className="text-2xl">{curr.flag}</span>
+                <span className="text-sm font-bold text-gray-900">{curr.code}</span>
+                <span className="text-[10px] text-gray-400 leading-tight text-center truncate w-full">{curr.name}</span>
+                <span className="text-sm font-bold text-purple-700 mt-1">
+                  {rate
+                    ? rate.value.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: rate.value > 100 ? 0 : 4,
+                      })
+                    : "—"}
+                </span>
+                <span className="text-[10px] text-gray-400">per USD</span>
+              </div>
+            );
+          })
+        )}
       </div>
-
-      <div className="mt-3 h-2 w-44 rounded-full bg-gray-300/80" />
-
-      {refreshing && (
-        <p className="text-xs text-gray-400 mt-3">Refreshing rates...</p>
-      )}
     </div>
   );
 }
